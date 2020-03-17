@@ -1,5 +1,6 @@
 defmodule Sitemapper.SitemapGenerator do
   alias Sitemapper.{Encoder, File, URL}
+  require IEx
 
   @max_length 52_428_800
   @max_count 50_000
@@ -50,17 +51,17 @@ defmodule Sitemapper.SitemapGenerator do
 
   defp url_element(%URL{} = url) do
     elements =
-      [:loc, :lastmod, :changefreq, :priority]
-      |> Enum.reduce(%{}, fn k, acc ->
+      [{3, :lastmod}, {4, :changefreq}, {5, :priority}, {1, :loc}]
+      |> Enum.reduce(%{}, fn {order, k}, acc ->
         case Map.get(url, k) do
           nil ->
             acc
 
           v ->
-            Map.put(acc, k, Encoder.encode(v))
+            Map.put(acc, {order, k}, Encoder.encode(v))
         end
       end)
-      |> Enum.map(fn {k, v} ->
+      |> Enum.map(fn {{_, k}, v} ->
         XmlBuilder.element(k, v)
       end)
 
