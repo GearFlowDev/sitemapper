@@ -59,6 +59,9 @@ defmodule Sitemapper do
 
     enum
     |> Stream.each(fn {filename, body} ->
+      body = body
+      |> List.flatten()
+      |> Enum.join("")
       :ok = store.write(filename, body, store_config)
     end)
   end
