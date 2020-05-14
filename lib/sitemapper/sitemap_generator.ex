@@ -1,6 +1,5 @@
 defmodule Sitemapper.SitemapGenerator do
   alias Sitemapper.{Encoder, File, URL}
-  require IEx
 
   @max_length 52_428_800
   @max_count 50_000
@@ -38,15 +37,16 @@ defmodule Sitemapper.SitemapGenerator do
         {:error, :over_count}
 
       true ->
-        new_body = [body, element, @line_sep]
+        new_body = body ++ [element, @line_sep]
+
         %File{count: new_count, length: new_length, body: new_body}
     end
   end
 
   def finalize(%File{count: count, length: length, body: body}) do
-    new_body = [body, @urlset_end, @line_sep]
+    new_body = body ++ [@urlset_end, @line_sep]
     new_length = length + @end_length
-    %File{count: count, length: new_length, body: new_body}
+    %File{count: count, length: new_length, body: Enum.join(new_body)}
   end
 
   defp url_element(%URL{} = url) do

@@ -14,7 +14,7 @@ def deps do
     {:sitemapper, "~> 0.4.0"}
   ]
 end
-``` 
+```
 
 ## Usage
 
