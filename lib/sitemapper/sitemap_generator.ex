@@ -6,7 +6,7 @@ defmodule Sitemapper.SitemapGenerator do
   @max_count 50_000
 
   @dec "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-  @urlset_start "<urlset xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:image=\"http://www.google.com/schemas/sitemap-image/1.1\" xsi:schemaLocation=\"http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd http://www.google.com/schemas/sitemap-image/1.1 http://www.google.com/schemas/sitemap-image/1.1/sitemap-image.xsd\" xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">"
+  @urlset_start "<urlset xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd\" xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">"
   @urlset_end "</urlset>"
 
   @line_sep "\n"
@@ -51,18 +51,15 @@ defmodule Sitemapper.SitemapGenerator do
 
   defp url_element(%URL{} = url) do
     elements =
-      [{3, :lastmod}, {4, :changefreq}, {5, :priority}, {1, :loc}]
-      |> Enum.reduce(%{}, fn {order, k}, acc ->
+      [:loc, :lastmod, :changefreq, :priority]
+      |> Enum.reduce([], fn k, acc ->
         case Map.get(url, k) do
           nil ->
             acc
 
           v ->
-            Map.put(acc, {order, k}, Encoder.encode(v))
+            acc ++ [{k, Encoder.encode(v)}]
         end
-      end)
-      |> Enum.map(fn {{_, k}, v} ->
-        XmlBuilder.element(k, v)
       end)
 
     XmlBuilder.element(:url, elements)

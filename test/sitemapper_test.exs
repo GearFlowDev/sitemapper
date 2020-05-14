@@ -35,9 +35,9 @@ defmodule SitemapperTest do
 
     assert Enum.count(elements) == 2
     assert Enum.at(elements, 0) |> elem(0) == "sitemap-00001.xml.gz"
-    # assert Enum.at(elements, 0) |> elem(1) |> IO.iodata_length() == 505
+    assert Enum.at(elements, 0) |> elem(1) |> IO.iodata_length() == 561
     assert Enum.at(elements, 1) |> elem(0) == "sitemap.xml.gz"
-    # assert Enum.at(elements, 1) |> elem(1) |> IO.iodata_length() == 158
+    assert Enum.at(elements, 1) |> elem(1) |> IO.iodata_length() == 228
   end
 
   test "generate with 50,000 URLs" do
@@ -54,9 +54,9 @@ defmodule SitemapperTest do
 
     assert Enum.count(elements) == 2
     assert Enum.at(elements, 0) |> elem(0) == "sitemap-00001.xml.gz"
-    # assert Enum.at(elements, 0) |> elem(1) |> IO.iodata_length() == 127_957
+    assert Enum.at(elements, 0) |> elem(1) |> IO.iodata_length() == 128_046
     assert Enum.at(elements, 1) |> elem(0) == "sitemap.xml.gz"
-    # assert Enum.at(elements, 1) |> elem(1) |> IO.iodata_length() == 158
+    assert Enum.at(elements, 1) |> elem(1) |> IO.iodata_length() == 228
   end
 
   test "generate with 50,001 URLs" do
@@ -80,21 +80,30 @@ defmodule SitemapperTest do
   test "generate with gzip disabled" do
     opts = [
       sitemap_url: "http://example.org/foo",
-      gzip: false
+      gzip: false,
+      index_lastmod: ~D[2020-01-01]
     ]
 
     elements =
-      Stream.concat([1..50_000])
+      Stream.concat([1..100])
       |> Stream.map(fn i ->
-        %URL{loc: "http://example.com/#{i}"}
+        %URL{
+          loc: "http://example.com/#{i}",
+          lastmod: ~D[2020-01-01],
+          priority: 0.5,
+          changefreq: :hourly
+        }
       end)
       |> Sitemapper.generate(opts)
 
+    sitemap_00001_contents = File.read!(Path.join(__DIR__, "fixtures/sitemap-00001.xml"))
+    sitemap_index_contents = File.read!(Path.join(__DIR__, "fixtures/sitemap.xml"))
+
     assert Enum.count(elements) == 2
     assert Enum.at(elements, 0) |> elem(0) == "sitemap-00001.xml"
-    # assert Enum.at(elements, 0) |> elem(1) |> IO.iodata_length() == 2_539_004
+    assert Enum.at(elements, 0) |> elem(1) |> IO.chardata_to_string() == sitemap_00001_contents
     assert Enum.at(elements, 1) |> elem(0) == "sitemap.xml"
-    # assert Enum.at(elements, 1) |> elem(1) |> IO.iodata_length() == 197
+    assert Enum.at(elements, 1) |> elem(1) |> IO.chardata_to_string() == sitemap_index_contents
   end
 
   test "generate with an alternative name" do
@@ -116,15 +125,16 @@ defmodule SitemapperTest do
   end
 
   test "generate and persist" do
-    path = File.cwd!() |> Path.join("test/store")
-    File.mkdir_p!(path)
+    store_path = File.cwd!() |> Path.join("test/store")
+    File.mkdir_p!(store_path)
 
     opts = [
       sitemap_url: "http://example.org/foo",
       store: Sitemapper.FileStore,
       store_config: [
-        path: path
-      ]
+        path: store_path
+      ],
+      gzip: false
     ]
 
     elements =
